@@ -1,6 +1,5 @@
 =begin
 Plugin: Goodreads Logger
-Version: 1.0
 Description: Creates separate entries for books you finished today
 Author: [Brett Terpstra](http://brettterpstra.com)
 Configuration:

@@ -1,6 +1,5 @@
 =begin
 Plugin: App.net Logger
-Version: 1.1
 Description: Logs today's posts to App.net.
 Notes:
   appnet_usernames is an array of App.net user names
@@ -9,7 +8,6 @@ Configuration:
   appnet_usernames: [ ]
   appnet_tags: "#social #appnet"
   appnet_save_replies: false
-  appnet_digest: true
 Notes:
 
 =end
@@ -19,8 +17,7 @@ config = {
     'appnet_usernames is an array of App.net user names'],
   'appnet_usernames' => [ ],
   'appnet_tags' => '#social #appnet',
-  'appnet_save_replies' => false,
-  'appnet_digest' => true
+  'appnet_save_replies' => false
 }
 $slog.register_plugin({ 'class' => 'AppNetLogger', 'config' => config })
 
@@ -58,7 +55,7 @@ class AppNetLogger < Slogger
     config['appnet_usernames'].each do |user|
       begin
         rss_feed = "https://alpha-api.app.net/feed/rss/users/@"+ user + "/posts"
-                                        
+
         url = URI.parse rss_feed
 
         http = Net::HTTP.new url.host, url.port
@@ -77,46 +74,27 @@ class AppNetLogger < Slogger
           item_date = Time.parse(item.date.to_s) + Time.now.gmt_offset
           if item_date > @timespan
             content = ''
-            item.title = item.title.gsub(/^@#{user}: /,'').strip   # remove user's own name from front of post
-            item.title = item.title.gsub(/\n/,"\n    ") if config['appnet_digest']           # fix for multi-line posts displayed in markdown
+            item.title = item.title.gsub(/^#{user}: /,'').strip   # remove user's own name from front of post
+            item.title = item.title.gsub(/\n/,"\n    ")           # fix for multi-line posts displayed in markdown
             if item.title =~ /^@/
-              if config['appnet_save_replies']
-                if config['appnet_digest']
-                  feed_output += "* [#{item_date.strftime(@time_format)}](#{item.link}) #{linkify(item.title)}#{content}\n"
-                else
-                  feed_output = "#{linkify(item.title)}\n"
-                end
+              if config['appnet_save_replies'] == true
+                feed_output += "* [#{item_date.strftime('%I:%M %p')}](#{item.link}) #{linkify(item.title)}#{content}\n"
               end
             else
-              if config['appnet_digest']
-                feed_output += "* [#{item_date.strftime(@time_format)}](#{item.link}) #{linkify(item.title)}#{content}\n"
-              else
-                feed_output = "#{linkify(item.title)}\n"
-              end
-            end
-            unless config['appnet_digest']
-              output = feed_output
-              unless output == ''
-                options = {}
-                options['datestamp'] = Time.parse(item.date.to_s).utc.iso8601
-                options['content'] = "## App.net [post](#{item.link}) by [@#{user}](#{rss.channel.link})\n#{output}#{tags}"
-                sl.to_dayone(options)
-              end
+              feed_output += "* [#{item_date.strftime('%I:%M %p')}](#{item.link}) #{linkify(item.title)}#{content}\n"
             end
           else
             break
           end
         }
-        if config['appnet_digest']
-          output += "#### [#{rss.channel.title}](#{rss.channel.link})\n\n" + feed_output + "\n" unless feed_output == ''
-        end
+        output += "#### [#{rss.channel.title}](#{rss.channel.link})\n\n" + feed_output + "\n" unless feed_output == ''
       rescue Exception => e
         puts "Error getting posts for #{rss_feed}"
         p e
         return ''
       end
     end
-    unless output == '' || !config['appnet_digest']
+    unless output == ''
       options = {}
       options['content'] = "## App.net posts\n\n#{output}#{tags}"
       sl.to_dayone(options)
