@@ -8,6 +8,9 @@
 #        Copyright 2012, Brett Terpstra
 #              http://brettterpstra.com
 #                  --------------------
+#        Further modifications by Chris Metcalf
+#              http://chrismetcalf.net
+#
 MAJOR_VERSION = 2.1
 MINOR_VERSION = 0
 BUILD_NUMBER = 6
@@ -15,6 +18,6 @@ BUILD_NUMBER = 6
 init_env = ENV['SLOGGER_NO_INITIALIZE'].to_s
 ENV['SLOGGER_NO_INITIALIZE'] = "false"
 
-require File.expand_path('../slogger',__FILE__)
+require File.expand_path('../slogger', __FILE__)
 
 ENV['SLOGGER_NO_INITIALIZE'] = init_env
